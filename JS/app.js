@@ -2,14 +2,14 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ========== CONSTANTS & SAMPLE DATA ==========
 const INITIAL_INVENTORY = [
-    { id: 1, name: "HP Series Busbar Trunking", category: "Busbar Systems", quantity: 45, minStock: 20, price: 1250, supplier: "Sample Supplier", location: "Warehouse A", images: [] },
-    { id: 2, name: "Copper Busbar 100A", category: "Busbars", quantity: 120, minStock: 50, price: 85, supplier: "Andeli", location: "Warehouse A", images: [] },
-    { id: 3, name: "Aluminum Busbar 200A", category: "Busbars", quantity: 8, minStock: 30, price: 65, supplier: "WEG", location: "Warehouse B", images: [] },
-    { id: 4, name: "Circuit Breaker 63A", category: "Electrical Components", quantity: 200, minStock: 100, price: 45, supplier: "Nano-EPC", location: "Warehouse A", images: [] },
-    { id: 5, name: "Industrial Cable 4mm²", category: "Cables", quantity: 500, minStock: 200, price: 12, supplier: "MM Electric", location: "Warehouse C", images: [] },
-    { id: 6, name: "Switchgear Panel", category: "Panels", quantity: 15, minStock: 10, price: 850, supplier: "Sample Supplier B", location: "Warehouse B", images: [] },
-    { id: 7, name: "Insulator Components", category: "Insulators", quantity: 350, minStock: 150, price: 8, supplier: "Wetown", location: "Warehouse A", images: [] },
-    { id: 8, name: "Junction Box IP65", category: "Enclosures", quantity: 75, minStock: 40, price: 35, supplier: "Andeli", location: "Warehouse C", images: [] }
+    { id: 1, name: "MacBook Pro 14\"", category: "Electronics", quantity: 15, minStock: 5, price: 1999, supplier: "Apple", location: "Office HQ", images: [] },
+    { id: 2, name: "Ergonomic Office Chair", category: "Furniture", quantity: 25, minStock: 10, price: 349, supplier: "Herman Miller", location: "Warehouse A", images: [] },
+    { id: 3, name: "4K Monitor 27\"", category: "Electronics", quantity: 40, minStock: 15, price: 450, supplier: "Dell", location: "Office HQ", images: [] },
+    { id: 4, name: "Wireless Mechanical Keyboard", category: "Accessories", quantity: 100, minStock: 30, price: 129, supplier: "Logitech", location: "Storage Room", images: [] },
+    { id: 5, name: "Electric Standing Desk", category: "Furniture", quantity: 12, minStock: 5, price: 599, supplier: "Fully", location: "Warehouse B", images: [] },
+    { id: 6, name: "Noise Cancelling Headphones", category: "Accessories", quantity: 30, minStock: 10, price: 349, supplier: "Sony", location: "Office HQ", images: [] },
+    { id: 7, name: "Smart LED Desk Lamp", category: "Lighting", quantity: 65, minStock: 20, price: 79, supplier: "Xiaomi", location: "Storage Room", images: [] },
+    { id: 8, name: "USB-C Docking Station", category: "Accessories", quantity: 150, minStock: 50, price: 89, supplier: "Anker", location: "Storage Room", images: [] }
 ];
 
 // ========== UTILITY FUNCTIONS ==========
