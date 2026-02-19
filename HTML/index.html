@@ -304,14 +304,11 @@
             localStorage.setItem('im_demo_seen', '1');
         }
 
-        window.addEventListener('load', function () {
+        function showDemoPopup() {
             if (!localStorage.getItem('im_demo_seen')) {
-                // Show after splash screen fades
-                setTimeout(() => {
-                    document.getElementById('demo-overlay').style.display = 'flex';
-                }, 700);
+                document.getElementById('demo-overlay').style.display = 'flex';
             }
-        });
+        }
 
         // ===== APP LOADER =====
         const statusEl = document.getElementById('splash-status');
@@ -362,6 +359,7 @@
 
                     setTimeout(() => {
                         if (splashEl) splashEl.style.display = 'none';
+                        showDemoPopup();
                     }, 500);
 
                 } catch (babelError) {
