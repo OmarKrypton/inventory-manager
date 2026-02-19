@@ -1,4 +1,4 @@
-/* ========== BARDUCT INVENTORY - CORE DESIGN SYSTEM ========== */
+/* ========== INVENTORY MANAGER- CORE DESIGN SYSTEM ========== */
 /* ========== ROOT VARIABLES ========== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap');
 
@@ -262,11 +262,48 @@ body {
   border-radius: var(--radius);
   margin-left: 20px;
   letter-spacing: -0.01em;
+  position: relative !important;
+  z-index: 1 !important;
+  overflow: hidden !important;
+  border: 1px solid var(--gray-200) !important;
+}
+
+.active-view-indicator::before {
+  content: '';
+  position: absolute;
+  top: -150%;
+  left: -150%;
+  width: 400%;
+  height: 400%;
+  background: conic-gradient(var(--primary),
+      var(--white-fixed),
+      var(--primary-dark),
+      var(--primary-light),
+      var(--white-fixed),
+      var(--primary));
+  animation: google-color-cycle 3s linear infinite;
+  z-index: -2;
+  opacity: 1;
+}
+
+.active-view-indicator::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: var(--gray-100);
+  border-radius: calc(var(--radius) - 2px);
+  z-index: -1;
+  opacity: 1;
 }
 
 [data-theme="dark"] .active-view-indicator {
   color: var(--white-fixed);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--white);
+  border-color: var(--gray-700) !important;
+}
+
+[data-theme="dark"] .active-view-indicator::after {
+  background: var(--white);
 }
 
 .nav-container {
@@ -4818,17 +4855,17 @@ body.has-offline-banner .header {
     top: 60px;
     padding: 10px 15px;
   }
-  
+
   .sync-banner-content {
     font-size: 13px;
     gap: 10px;
     flex-wrap: wrap;
   }
-  
+
   .sync-banner-content .sync-last {
     display: none;
   }
-  
+
   .sync-save-btn {
     padding: 6px 12px !important;
     font-size: 12px;
@@ -5159,4 +5196,86 @@ body.has-offline-banner .header {
 
 [data-theme="dark"] .sync-save-btn:hover {
   background: var(--gray-200) !important;
+}
+
+/* ========== DEMO MODAL BUTTON ENHANCEMENTS ========== */
+
+/* Gmail Button Animation - Cycling Google Colors */
+@keyframes google-color-cycle {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-gmail {
+  position: relative !important;
+  z-index: 1 !important;
+  overflow: hidden !important;
+  background: var(--white) !important;
+  color: var(--gray-800) !important;
+  border: 1px solid var(--gray-200) !important;
+  transition: all 0.3s ease !important;
+}
+
+.btn-gmail::before {
+  content: '';
+  position: absolute;
+  top: -150%;
+  left: -150%;
+  width: 400%;
+  height: 400%;
+  background: conic-gradient(#4285f4,
+      #ea4335,
+      #fbbc05,
+      #34a853,
+      #4285f4);
+  animation: google-color-cycle 3s linear infinite;
+  z-index: -2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-gmail::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  /* Slightly larger inset for a thicker colored border effect */
+  background: var(--white);
+  border-radius: calc(var(--radius) - 3px);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-gmail:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: var(--gray-800) !important;
+}
+
+.btn-gmail:hover::before,
+.btn-gmail:hover::after {
+  opacity: 1;
+}
+
+[data-theme="dark"] .btn-gmail::after {
+  background: var(--white);
+}
+
+[data-theme="dark"] .btn-gmail {
+  background: var(--white) !important;
+  color: var(--gray-800) !important;
+  border-color: var(--gray-300) !important;
+}
+
+/* LinkedIn Button Hover Effect */
+.btn-linkedin-hover:hover {
+  background: #0077b5 !important;
+  color: var(--white-fixed) !important;
+  border-color: #0077b5 !important;
+  box-shadow: 0 4px 12px rgba(0, 119, 181, 0.4) !important;
 }

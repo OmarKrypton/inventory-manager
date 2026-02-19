@@ -70,83 +70,113 @@ const Utils = {
                 const primaryColor = [13, 148, 136];
                 const copperColor = [180, 83, 9];
                 const darkColor = [31, 41, 55];
+                const lightGray = [249, 250, 251];
 
                 let logoDataUrl = null;
                 try {
-                    const response = await fetch('../Images/logo.png');
-                    const blob = await response.blob();
+                    const response = await fetch('../Images/logo.svg');
+                    const svgText = await response.text();
+
+                    // Convert SVG to Data URL for jsPDF
                     logoDataUrl = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.readAsDataURL(blob);
+                        const img = new Image();
+                        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+                        const url = URL.createObjectURL(svgBlob);
+
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width * 2; // Higher resolution
+                            canvas.height = img.height * 2;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const dataUrl = canvas.toDataURL('image/png');
+                            URL.revokeObjectURL(url);
+                            resolve(dataUrl);
+                        };
+                        img.onerror = () => resolve(null);
+                        img.src = url;
                     });
                 } catch (e) {
-                    console.log('Logo not found, continuing without it');
+                    console.log('Logo not found or could not be processed', e);
                 }
 
+                // Header with background
                 doc.setFillColor(...primaryColor);
-                doc.rect(0, 0, 297, 30, 'F');
+                doc.rect(0, 0, 297, 40, 'F');
 
                 if (logoDataUrl) {
-                    doc.addImage(logoDataUrl, 'PNG', 12, 4, 22, 22);
+                    doc.addImage(logoDataUrl, 'PNG', 15, 8, 24, 24);
                     doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(22);
-                    doc.text('INVENTORY MANAGER', 40, 18);
+                    doc.setFontSize(26);
+                    doc.text('INVENTORY MANAGER', 45, 20);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Official Inventory Status Report', 45, 28);
                 } else {
                     doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(22);
-                    doc.text('INVENTORY MANAGER', 15, 18);
+                    doc.setFontSize(26);
+                    doc.text('INVENTORY MANAGER', 15, 20);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Official Inventory Status Report', 15, 28);
                 }
 
                 const today = new Date().toLocaleDateString('en-US', {
                     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                 });
-                doc.setFontSize(10);
-                doc.text(`Report Generated: ${today}`, 15, 38);
 
-                let yPos = 50;
-                const cardWidth = 55;
-                const cardHeight = 20;
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.text(`DATE: ${today.toUpperCase()}`, 282, 32, { align: 'right' });
+
+                let yPos = 55;
+                const cardWidth = 64;
+                const cardHeight = 25;
                 const cardGap = 8;
 
                 const totalItems = inventory.length;
                 const totalValue = inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0);
                 const lowStockCount = inventory.filter(item => item.quantity <= item.minStock).length;
-                const categoriesCount = [...new Set(inventory.map(item => item.category))].length;
+                const totalStock = inventory.reduce((sum, item) => sum + item.quantity, 0);
 
                 const summaryCards = [
-                    { label: 'Total Items', value: totalItems.toString(), color: primaryColor },
+                    { label: 'Total Products', value: totalItems.toLocaleString(), color: primaryColor },
                     { label: 'Total Value', value: '$' + totalValue.toLocaleString(), color: copperColor },
-                    { label: 'Low Stock Alerts', value: lowStockCount.toString(), color: lowStockCount > 0 ? [239, 68, 68] : primaryColor },
-                    { label: 'Categories', value: categoriesCount.toString(), color: primaryColor }
+                    { label: 'Items to Restock', value: lowStockCount.toLocaleString(), color: lowStockCount > 0 ? [239, 68, 68] : primaryColor },
+                    { label: 'Stock Volume', value: totalStock.toLocaleString(), color: primaryColor }
                 ];
 
+                // Draw Summary Cards
                 let xPos = 15;
                 summaryCards.forEach(card => {
-                    doc.setFillColor(249, 250, 251);
-                    doc.setDrawColor(...card.color);
-                    doc.setLineWidth(0.5);
-                    doc.roundedRect(xPos, yPos, cardWidth, cardHeight, 3, 3, 'FD');
+                    doc.setFillColor(...lightGray);
+                    doc.setDrawColor(229, 231, 235);
+                    doc.setLineWidth(0.1);
+                    doc.roundedRect(xPos, yPos, cardWidth, cardHeight, 4, 4, 'FD');
+
+                    // Left color accent
+                    doc.setFillColor(...card.color);
+                    doc.rect(xPos, yPos, 4, cardHeight, 'F');
 
                     doc.setTextColor(107, 114, 128);
-                    doc.setFont('helvetica', 'normal');
+                    doc.setFont('helvetica', 'bold');
                     doc.setFontSize(8);
-                    doc.text(card.label, xPos + 5, yPos + 8);
+                    doc.text(card.label.toUpperCase(), xPos + 10, yPos + 10);
 
                     doc.setTextColor(...darkColor);
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(12);
-                    doc.text(card.value, xPos + 5, yPos + 16);
+                    doc.setFontSize(14);
+                    doc.text(card.value, xPos + 10, yPos + 18);
                     xPos += cardWidth + cardGap;
                 });
 
-                yPos = 75;
+                yPos = 95;
                 doc.setTextColor(...darkColor);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(14);
-                doc.text('Inventory by Category', 15, yPos);
+                doc.setFontSize(16);
+                doc.text('Executive Categories Summary', 15, yPos);
 
                 const categoryData = {};
                 inventory.forEach(item => {
@@ -160,57 +190,80 @@ const Utils = {
                 ]);
 
                 doc.autoTable({
-                    startY: yPos + 5,
-                    head: [['Category', 'Items Count', 'Total Value']],
+                    startY: yPos + 8,
+                    head: [['Category Name', 'Unique Products', 'Net Category Value']],
                     body: categoryRows,
-                    theme: 'striped',
-                    headStyles: { fillColor: primaryColor, textColor: 255 },
-                    styles: { fontSize: 9, cellPadding: 3 },
-                    columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 40, halign: 'center' }, 2: { cellWidth: 60, halign: 'right' } },
+                    theme: 'grid',
+                    headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', halign: 'center' },
+                    styles: { fontSize: 10, cellPadding: 5 },
+                    columnStyles: {
+                        0: { cellWidth: 100 },
+                        1: { cellWidth: 60, halign: 'center' },
+                        2: { cellWidth: 107, halign: 'right' }
+                    },
                     margin: { left: 15, right: 15 }
                 });
 
+                const addFooter = (data) => {
+                    const totalPages = doc.internal.getNumberOfPages();
+                    doc.setFontSize(9);
+                    doc.setTextColor(156, 163, 175);
+                    doc.setFont('helvetica', 'italic');
+                    doc.text(`Inventory Manager Professional v2.0 | Page ${data.pageNumber} of ${totalPages}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                };
+
                 doc.addPage();
-                yPos = 20;
+                yPos = 25;
                 doc.setTextColor(...darkColor);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(14);
-                doc.text('Detailed Inventory List', 15, yPos);
+                doc.setFontSize(18);
+                doc.text('Detailed Inventory Audit List', 15, yPos);
 
                 const inventoryRows = inventory.map(item => [
                     item.name, item.category, item.supplier, item.location,
                     item.quantity.toString(), item.minStock.toString(),
                     '$' + item.price.toLocaleString(), '$' + (item.quantity * item.price).toLocaleString(),
-                    item.quantity <= item.minStock ? '⚠️ LOW' : '✓ OK'
+                    item.quantity <= item.minStock ? '⚠️ RESTOCK' : '✓ HEALTHY'
                 ]);
 
                 doc.autoTable({
-                    startY: yPos + 5,
-                    head: [['Item Name', 'Category', 'Supplier', 'Location', 'Qty', 'Min', 'Price', 'Total Value', 'Status']],
+                    startY: yPos + 10,
+                    head: [['Item Name', 'Category', 'Supplier', 'Warehouse Location', 'Qty', 'Min', 'Price', 'Net Value', 'Status']],
                     body: inventoryRows,
                     theme: 'striped',
-                    headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 8 },
-                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [55, 65, 81], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+                    styles: { fontSize: 8, cellPadding: 3, valign: 'middle' },
                     columnStyles: {
-                        0: { cellWidth: 50 }, 1: { cellWidth: 35 }, 2: { cellWidth: 35 }, 3: { cellWidth: 35 },
+                        0: { cellWidth: 45 }, 1: { cellWidth: 35 }, 2: { cellWidth: 35 }, 3: { cellWidth: 35 },
                         4: { cellWidth: 15, halign: 'center' }, 5: { cellWidth: 15, halign: 'center' },
                         6: { cellWidth: 25, halign: 'right' }, 7: { cellWidth: 30, halign: 'right' },
-                        8: { cellWidth: 22, halign: 'center' }
+                        8: { cellWidth: 30, halign: 'center' }
+                    },
+                    didDrawCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 8) {
+                            if (data.cell.raw.includes('RESTOCK')) {
+                                doc.setTextColor(220, 38, 38);
+                                doc.setFont('helvetica', 'bold');
+                            } else {
+                                doc.setTextColor(21, 128, 61);
+                                doc.setFont('helvetica', 'bold');
+                            }
+                        }
                     },
                     margin: { left: 15, right: 15 },
-                    didDrawPage: (data) => {
-                        doc.setFontSize(8);
-                        doc.setTextColor(156, 163, 175);
-                        doc.text(`Inventory Manager - Page ${data.pageNumber}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-                    }
+                    didDrawPage: addFooter
                 });
 
-                const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+                // Add footer to first page as well
+                doc.setPage(1);
+                addFooter({ pageNumber: 1 });
+
+                const fileName = `IM_Report_${new Date().toISOString().split('T')[0]}.pdf`;
                 doc.save(fileName);
-                addAlert(`PDF report saved as ${fileName}`, 'success');
+                addAlert(`Professional PDF report generated: ${fileName}`, 'success');
             } catch (error) {
                 console.error('PDF generation error:', error);
-                addAlert('Error generating PDF. Falling back to print...', 'warning');
+                addAlert('Error generating high-fidelity PDF. Falling back to print...', 'warning');
                 window.print();
             }
         }, 100);
@@ -693,6 +746,15 @@ function InventoryAppContent() {
     const [viewingAttachment, setViewingAttachment] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [showDemoModal, setShowDemoModal] = useState(false);
+
+    useEffect(() => {
+        const hasSeenDemo = localStorage.getItem('im_demo_modal_v2');
+        if (!hasSeenDemo) {
+            setShowDemoModal(true);
+            localStorage.setItem('im_demo_modal_v2', 'true');
+        }
+    }, []);
 
     const chartRef = useRef(null);
     const chartInstance = useRef(null);
@@ -727,10 +789,8 @@ function InventoryAppContent() {
     const totalValue = useMemo(() => inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0), [inventory]);
 
     const closeAllModals = () => {
-        setShowAddModal(false); setShowImportModal(false); setShowEditModal(false); setShowAddCategoryModal(false);
-        setEditingItem(null); setShowImageModal(false); setSelectedImageItem(null); setShowStockAdjustModal(false);
         setShowPOModal(false); setShowMovementHistoryModal(false); setHistoryItem(null); setShowBulkEditModal(false);
-        setShowBackupModal(false); setIsMenuOpen(false);
+        setShowBackupModal(false); setIsMenuOpen(false); setShowDemoModal(false);
     };
 
     // Utils.generatePDFReport is used from global Utils
@@ -1292,12 +1352,11 @@ function InventoryAppContent() {
                             <button className={`nav-btn ${view === 'audit' ? 'active' : ''}`} onClick={() => { setView('audit'); setIsMenuOpen(false); }}>📜 Audit Log</button>
                         </div>
 
-                        {/* Contact Section */}
+                        {/* Demo/Full Version Section */}
                         <div className="nav-section">
-                            <div className="sync-header">📬 Get Full Version</div>
+                            <div className="sync-header clickable" onClick={() => { setShowDemoModal(true); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>📬 Get Full Version</div>
                             <div className="sync-content">
                                 <div className="sync-message">Cloud sync, bulk ops & more</div>
-                                <a href="mailto:omar9007@gmail.com" className="btn btn-sm btn-primary" style={{ marginTop: '8px', textDecoration: 'none', textAlign: 'center' }}>📧 Contact</a>
                             </div>
                         </div>
                     </nav>
@@ -1405,6 +1464,10 @@ function InventoryAppContent() {
 
             <OfflineBanner isOnline={isOnline} show={showOnlineBanner} onClose={() => setShowOnlineBanner(false)} />
             <ThemeToggle isDark={isDark} toggle={toggleTheme} />
+
+            {showDemoModal && (
+                <DemoModal onClose={() => setShowDemoModal(false)} />
+            )}
         </div>
     );
 }
@@ -1414,6 +1477,64 @@ function InventoryApp() {
         <AlertProvider>
             <InventoryAppContent />
         </AlertProvider>
+    );
+}
+
+function DemoModal({ onClose }) {
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal" style={{ maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+                <div className="modal-header-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 className="modal-title" style={{ margin: 0 }}>🚀 Welcome to Inventory Manager</h2>
+                    <button className="modal-close" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--gray-400)', padding: '0 0 10px 10px' }}>&times;</button>
+                </div>
+
+                <div className="modal-body" style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '64px', marginBottom: '15px' }}>📦</div>
+                    <p className="modal-subtitle" style={{ fontSize: '1.2rem', fontWeight: '600' }}>
+                        This is a <strong>Demo Version</strong>
+                    </p>
+
+                    <div style={{ backgroundColor: 'var(--gray-50)', padding: '20px', borderRadius: 'var(--radius-lg)', marginBottom: '24px', textAlign: 'left', border: '1px solid var(--gray-100)' }}>
+                        <p style={{ fontWeight: '700', marginBottom: '12px', color: 'var(--gray-800)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pro Features Included:</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}><span style={{ color: 'var(--success)' }}>✔</span> <span>Real-time Cloud Synchronization</span></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}><span style={{ color: 'var(--success)' }}>✔</span> <span>Advanced Bulk Operations</span></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}><span style={{ color: 'var(--success)' }}>✔</span> <span>Deep Analytics & Forecasting</span></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}><span style={{ color: 'var(--success)' }}>✔</span> <span>Multi-user Collaboration</span></div>
+                        </div>
+                    </div>
+
+                    <p style={{ marginBottom: '20px', color: 'var(--gray-600)', fontSize: '14px', lineHeight: '1.5' }}>
+                        Interested in the full version or a customized solution for your business?
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <a href="mailto:omar9007@gmail.com" className="btn btn-gmail" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '14px' }}>
+                            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#4285F4" d="M45 16.2V38c0 1.1-.9 2-2 2H31V16.2l14-10.8z" />
+                                <path fill="#34A853" d="M3 16.2V38c0 1.1.9 2 2 2h12V16.2L3 5.4z" />
+                                <path fill="#EA4335" d="M45 10.8L31 21.6V7.2L42.5 3h1.5c.6 0 1 .4 1 1v6.8z" />
+                                <path fill="#FBBC05" d="M3 10.8l14 10.8V7.2L5.5 3H4c-.6 0-1 .4-1 1v6.8z" />
+                                <path fill="#EA4335" d="M31 21.6l-7 5.4-7-5.4V7.2l7 5.4 7-5.4z" />
+                            </svg>
+                            <span style={{ fontWeight: '600' }}>Gmail: omar9007@gmail.com</span>
+                        </a>
+                        <a href="https://linkedin.com/in/omar-mahmoud-292b011b8/" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-linkedin-hover" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '14px', transition: 'all 0.3s ease' }}>
+                            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#0077b5" d="M42 4H6c-1.1 0-2 .9-2 2v36c0 1.1.9 2 2 2h36c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" />
+                                <path fill="#fff" d="M14 19h7v17h-7zM17.5 10c2.5 0 4 1.5 4 3.5s-1.5 3.5-4 3.5-4-1.5-4-3.5 1.5-3.5 4-3.5zM24 19h7v3h.1c.9-1.5 2.5-2.5 4.5-2.5 4.5 0 5.4 3 5.4 7v9h-7v-10.5c0-2-1-3-2.5-3s-2.5 1-2.5 3V36h-7V19z" />
+                            </svg>
+                            <span style={{ fontWeight: '600' }}>Connect on LinkedIn</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div className="modal-footer" style={{ marginTop: '24px', borderTop: '1px solid var(--gray-100)', paddingTop: '20px' }}>
+                    <button className="btn btn-info" style={{ width: '100%', padding: '14px' }} onClick={onClose}>Start Exploring Demo</button>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -2087,7 +2208,7 @@ function BackupRestoreModal({ onClose, onExport, onImport, inventory, stockMovem
                                     {fileName || 'Click to select backup file'}
                                 </div>
                                 <div className="drop-zone-subtext">
-                                    Supports: barduct-backup-*.json
+                                    Supports: inventory-manager-backup-*.json
                                 </div>
                             </div>
                             <input
@@ -2256,7 +2377,7 @@ function PrintReportTemplate({ inventory, totalValue }) {
             <div className="print-report-header">
                 <div className="print-logo">
                     <span className="print-logo-icon">⚡</span>
-                    <span className="print-logo-text">Barduct Inventory Report</span>
+                    <span className="print-logo-text">Inventory Manager Report</span>
                 </div>
                 <div className="print-date">Generated: {today}</div>
             </div>

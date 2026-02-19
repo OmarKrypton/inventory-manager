@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Inventory Manager">
     <title>Inventory Manager</title>
-    <link rel="stylesheet" href="../CSS/styles.css">
+    <link rel="stylesheet" href="../CSS/styles.css?v=2">
     <style>
         #splash-screen {
             position: fixed;
@@ -249,38 +249,6 @@
 </head>
 
 <body>
-    <!-- Demo popup (shown once on first load) -->
-    <div id="demo-overlay" style="display:none;">
-        <div id="demo-popup">
-            <span class="demo-badge">🎯 Demo Version</span>
-            <img class="demo-logo" src="../Images/logo.svg" alt="Inventory Manager Logo"
-                onerror="this.style.display='none'">
-            <h2>Welcome to Inventory Manager</h2>
-            <p>This is a <strong>free demo</strong> of the full inventory management system. Some features are limited
-                in this version.</p>
-
-            <div class="demo-features">
-                <p>✅ Available in this demo:</p>
-                <ul>
-                    <li>Add, edit & delete inventory items</li>
-                    <li>Dashboard analytics & charts</li>
-                    <li>PDF report export</li>
-                    <li>CSV import & export</li>
-                    <li>Purchase orders & audit log</li>
-                    <li>Dark / Light mode</li>
-                </ul>
-            </div>
-
-            <div class="demo-contact">
-                <p>Want <strong>cloud sync, bulk operations, PWA install & forecasting</strong>? Get in touch:</p>
-                <a href="mailto:omar9007@gmail.com">📧 omar9007@gmail.com</a>
-                <a href="https://linkedin.com/in/omar-mahmoud-292b011b8/" target="_blank" rel="noopener">🔗 LinkedIn</a>
-            </div>
-
-            <button id="demo-dismiss" onclick="closeDemoPopup()">Got it, let me explore! 🚀</button>
-        </div>
-    </div>
-
     <div id="splash-screen">
         <div class="spinner"></div>
         <div style="font-weight: bold; font-size: 18px;">Inventory Manager</div>
@@ -295,25 +263,6 @@
     <div id="root"></div>
 
     <script>
-        // ===== DEMO POPUP =====
-        function closeDemoPopup() {
-            const overlay = document.getElementById('demo-overlay');
-            overlay.style.opacity = '0';
-            overlay.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => overlay.style.display = 'none', 300);
-            localStorage.setItem('im_demo_seen', '1');
-        }
-
-        function showDemoPopup() {
-            console.log('🧐 Checking if demo popup should show...');
-            if (!localStorage.getItem('im_demo_seen')) {
-                console.log('🎯 Showing demo popup!');
-                document.getElementById('demo-overlay').style.display = 'flex';
-            } else {
-                console.log('⏭️ Demo popup skipped (already seen). Run localStorage.removeItem("im_demo_seen") to reset.');
-            }
-        }
-
         // ===== APP LOADER =====
         const statusEl = document.getElementById('splash-status');
         const splashEl = document.getElementById('splash-screen');
@@ -363,7 +312,6 @@
 
                     setTimeout(() => {
                         if (splashEl) splashEl.style.display = 'none';
-                        showDemoPopup();
                     }, 500);
 
                 } catch (babelError) {
