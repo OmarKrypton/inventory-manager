@@ -645,9 +645,8 @@ function InventoryAppContent() {
         inventory, setInventory, stockMovements, setStockMovements,
         purchaseOrders, setPurchaseOrders, activities, setActivities,
         customCategories, setCustomCategories,
-        isSyncingToCloud, lastCloudSync, firebaseUser, isFirebaseLoading,
-        isOnline, showOnlineBanner, setShowOnlineBanner, pendingChanges,
-        logActivity, addStockMovement, saveToCloud, loadFromCloud, queueChange, syncChanges
+        isOnline, showOnlineBanner, setShowOnlineBanner,
+        logActivity, addStockMovement
     } = useInventoryData(addAlert);
 
     const [view, setView] = useState('dashboard');
@@ -672,6 +671,7 @@ function InventoryAppContent() {
     const [showBackupModal, setShowBackupModal] = useState(false);
     const [viewingAttachment, setViewingAttachment] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     const chartRef = useRef(null);
     const chartInstance = useRef(null);
@@ -798,10 +798,144 @@ function InventoryAppContent() {
     }, [view, inventory, isDark]);
 
     const filteredInventory = inventory.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = filterCategory === 'All' || item.category === filterCategory;
         return matchesSearch && matchesCategory;
     });
+
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+    const handleDragLeave = () => { setIsDragging(false); };
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files[0];
+        handleFileUpload(file);
+    };
+
+    const resetToDefault = () => {
+        if (confirm('Are you sure you want to reset to default sample data? This will clear current inventory.')) {
+            setInventory(INITIAL_INVENTORY);
+            setStockMovements([]);
+            setPurchaseOrders([]);
+            setActivities([]);
+            setCustomCategories([]);
+            localStorage.clear();
+            addAlert('System reset to default sample data', 'success');
+        }
+    };
+
+    const clearAllData = () => {
+        if (confirm('Are you sure you want to clear ALL data? This cannot be undone.')) {
+            setInventory([]);
+            setStockMovements([]);
+            setPurchaseOrders([]);
+            setActivities([]);
+            setCustomCategories([]);
+            localStorage.clear();
+            addAlert('All data has been cleared', 'warning');
+        }
+    };
+
+    const exportAllData = () => {
+        const data = {
+            inventory, stockMovements, purchaseOrders, activities, customCategories,
+            version: '1.0', exportDate: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inventory_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        addAlert('Backup file generated successfully', 'success');
+    };
+
+    const importAllData = (jsonString, merge = false) => {
+        try {
+            const data = JSON.parse(jsonString);
+            if (!data.inventory || !Array.isArray(data.inventory)) {
+                throw new Error('Invalid backup file: missing inventory data');
+            }
+
+            if (merge) {
+                setInventory(prev => {
+                    const mergedInventory = [...prev];
+                    let addedCount = 0;
+                    let updatedCount = 0;
+
+                    data.inventory.forEach(importedItem => {
+                        const existingIndex = mergedInventory.findIndex(item => String(item.id) === String(importedItem.id));
+                        if (existingIndex >= 0) {
+                            mergedInventory[existingIndex] = { ...mergedInventory[existingIndex], ...importedItem };
+                            updatedCount++;
+                        } else {
+                            mergedInventory.push(importedItem);
+                            addedCount++;
+                        }
+                    });
+
+                    setTimeout(() => {
+                        logActivity('IMPORT', `Merged backup: ${addedCount} items added, ${updatedCount} updated`);
+                        addAlert(`Merge complete: ${addedCount} items added, ${updatedCount} updated!`, 'success');
+                    }, 0);
+
+                    return mergedInventory;
+                });
+
+                if (data.stockMovements) {
+                    setStockMovements(prev => {
+                        const existingIds = new Set(prev.map(m => String(m.id)));
+                        const newMovements = data.stockMovements.filter(m => !existingIds.has(String(m.id)));
+                        return [...prev, ...newMovements];
+                    });
+                }
+                if (data.purchaseOrders) {
+                    setPurchaseOrders(prev => {
+                        const existingIds = new Set(prev.map(po => String(po.id)));
+                        const newOrders = data.purchaseOrders.filter(po => !existingIds.has(String(po.id)));
+                        return [...prev, ...newOrders];
+                    });
+                }
+            } else {
+                setInventory(data.inventory);
+                if (data.stockMovements) setStockMovements(data.stockMovements);
+                if (data.purchaseOrders) setPurchaseOrders(data.purchaseOrders);
+                if (data.activities) setActivities(data.activities);
+                if (data.customCategories) setCustomCategories(data.customCategories);
+
+                logActivity('IMPORT', `Restored full backup from ${new Date(data.exportDate).toLocaleDateString()}`);
+                addAlert(`Backup restored successfully! ${data.inventory.length} items loaded.`, 'success');
+            }
+            return { success: true };
+        } catch (error) {
+            addAlert('Error importing backup: ' + error.message, 'error');
+            return { success: false, error: error.message };
+        }
+    };
+
+    const exportToCSV = () => {
+        const headers = ['name', 'category', 'quantity', 'minStock', 'price', 'supplier', 'location'];
+        const csvContent = [
+            headers.join(','),
+            ...inventory.map(item => headers.map(header => {
+                const val = item[header] || '';
+                return typeof val === 'string' && val.includes(',') ? `"${val}"` : val;
+            }).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `inventory-manager-export-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        addAlert('Inventory exported to CSV', 'success');
+    };
 
     const openEditModal = (item) => { setEditingItem({ ...item }); setShowEditModal(true); };
 
@@ -951,142 +1085,13 @@ function InventoryAppContent() {
 
     // Utils.parseCSV is used from the global Utils namespace
 
-    const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
-    const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
-    const handleDrop = (e) => { e.preventDefault(); setIsDragging(false); handleFileUpload(e.dataTransfer.files[0]); };
 
-    const exportToCSV = () => {
-        const headers = ['name', 'category', 'quantity', 'minStock', 'price', 'supplier', 'location'];
-        const csvContent = [headers.join(','), ...inventory.map(item => headers.map(header => item[header]).join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `barduct-inventory-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
-
-    const clearAllData = () => {
-        if (confirm('⚠️ Are you sure you want to clear ALL inventory data? This action cannot be undone!')) {
-            localStorage.removeItem('im_inventory'); localStorage.removeItem('im_stock_movements');
-            localStorage.removeItem('im_purchase_orders'); localStorage.removeItem('im_activities');
-            setInventory(() => INITIAL_INVENTORY);
-            setStockMovements([]);
-            setPurchaseOrders([]);
-            logActivity('SYSTEM', 'Cleared all data and reset to defaults');
-            addAlert('All data has been cleared and reset to default inventory.', 'info');
-        }
-    };
-
-    const resetToDefault = () => {
-        if (confirm('Reset to default sample data? Your current inventory will be replaced.')) {
-            setInventory(() => INITIAL_INVENTORY);
-            logActivity('SYSTEM', 'Reset inventory to default sample data');
-            addAlert('Inventory reset to default sample data.', 'info');
-        }
-    };
 
     // ========== BACKUP & RESTORE FUNCTIONS ==========
-    const exportAllData = () => {
-        const data = {
-            inventory: inventory,
-            stockMovements: stockMovements,
-            purchaseOrders: purchaseOrders,
-            activities: activities,
-            customCategories: customCategories,
-            darkMode: localStorage.getItem('im_dark_mode') || 'false',
-            exportDate: new Date().toISOString(),
-            version: '1.0'
-        };
-
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `inventory-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        URL.revokeObjectURL(url);
-        logActivity('EXPORT', 'Exported full data backup');
-        addAlert('Backup file downloaded successfully!', 'success');
-    };
-
-    const importAllData = (jsonString, merge = false) => {
-        try {
-            const data = JSON.parse(jsonString);
-
-            if (!data.inventory || !Array.isArray(data.inventory)) {
-                throw new Error('Invalid backup file: missing inventory data');
-            }
-
-            if (merge) {
-                setInventory(prev => {
-                    const mergedInventory = [...prev];
-                    let addedCount = 0;
-                    let updatedCount = 0;
-
-                    data.inventory.forEach(importedItem => {
-                        const existingIndex = mergedInventory.findIndex(item => String(item.id) === String(importedItem.id));
-                        if (existingIndex >= 0) {
-                            mergedInventory[existingIndex] = { ...mergedInventory[existingIndex], ...importedItem };
-                            updatedCount++;
-                        } else {
-                            mergedInventory.push(importedItem);
-                            addedCount++;
-                        }
-                    });
-
-                    setTimeout(() => {
-                        logActivity('IMPORT', `Merged backup: ${addedCount} items added, ${updatedCount} updated`);
-                        addAlert(`Merge complete: ${addedCount} items added, ${updatedCount} updated!`, 'success');
-                    }, 0);
-
-                    return mergedInventory;
-                });
-
-                // Merge other data
-                if (data.stockMovements) {
-                    setStockMovements(prev => {
-                        const existingIds = new Set(prev.map(m => String(m.id)));
-                        const newMovements = data.stockMovements.filter(m => !existingIds.has(m.id));
-                        return [...prev, ...newMovements];
-                    });
-                }
-                if (data.purchaseOrders) {
-                    setPurchaseOrders(prev => {
-                        const existingIds = new Set(prev.map(po => String(po.id)));
-                        const newOrders = data.purchaseOrders.filter(po => !existingIds.has(po.id));
-                        return [...prev, ...newOrders];
-                    });
-                }
-            } else {
-                // Replace mode
-                setInventory(data.inventory);
-                if (data.stockMovements) setStockMovements(data.stockMovements);
-                if (data.purchaseOrders) setPurchaseOrders(data.purchaseOrders);
-                if (data.activities) setActivities(data.activities);
-                if (data.customCategories) setCustomCategories(data.customCategories);
-
-                logActivity('IMPORT', `Restored full backup from ${new Date(data.exportDate).toLocaleDateString()}`);
-                addAlert(`Backup restored successfully! ${data.inventory.length} items loaded.`, 'success');
-            }
-
-            return { success: true };
-        } catch (error) {
-            addAlert('Error importing backup: ' + error.message, 'error');
-            return { success: false, error: error.message };
-        }
-    };
-
     const addCategory = (categoryName) => {
         const trimmedName = categoryName.trim();
         if (!trimmedName) { addAlert('Category name cannot be empty', 'warning'); return; }
         if (allCategories.includes(trimmedName)) { addAlert('This category already exists', 'warning'); return; }
-        setCustomCategories([...customCategories, trimmedName]);
         setCustomCategories([...customCategories, trimmedName]);
         logActivity('SYSTEM', `Added new category: ${trimmedName}`);
         setShowAddCategoryModal(false);
@@ -1336,9 +1341,7 @@ function InventoryAppContent() {
             {showMovementHistoryModal && historyItem && (
                 <MovementHistoryModal item={historyItem} movements={stockMovements.filter(m => m.itemId === historyItem.id)} onClose={() => { setShowMovementHistoryModal(false); setHistoryItem(null); }} />
             )}
-            {showBulkEditModal && (
-                <BulkEditModal selectedCount={selectedItems.size} onClose={() => setShowBulkEditModal(false)} onEdit={handleBulkEdit} categories={categories.filter(c => c !== 'All')} />
-            )}
+
             {showImageModal && selectedImageItem && (
                 <ImageGalleryModal item={selectedImageItem} onClose={() => { setShowImageModal(false); setSelectedImageItem(null); }} onUpload={(files) => handleImageUpload(selectedImageItem.id, files)} onDelete={(imageIndex) => deleteImage(selectedImageItem.id, imageIndex)} />
             )}
@@ -1378,17 +1381,7 @@ function InventoryAppContent() {
                     categories={categories}
                 />
             )}
-            {showAuthModal && (
-                <AuthModal
-                    onClose={() => setShowAuthModal(false)}
-                    onLogin={(user) => {
-                        setFirebaseUser(user);
-                        setShowAuthModal(false);
-                        loadFromCloud(user.uid);
-                    }}
-                    isLoading={isFirebaseLoading}
-                />
-            )}
+
             <OfflineBanner isOnline={isOnline} show={showOnlineBanner} onClose={() => setShowOnlineBanner(false)} />
             <ThemeToggle isDark={isDark} toggle={toggleTheme} />
         </div>
