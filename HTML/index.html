@@ -305,8 +305,12 @@
         }
 
         function showDemoPopup() {
+            console.log('🧐 Checking if demo popup should show...');
             if (!localStorage.getItem('im_demo_seen')) {
+                console.log('🎯 Showing demo popup!');
                 document.getElementById('demo-overlay').style.display = 'flex';
+            } else {
+                console.log('⏭️ Demo popup skipped (already seen). Run localStorage.removeItem("im_demo_seen") to reset.');
             }
         }
 
