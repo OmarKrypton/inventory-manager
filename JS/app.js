@@ -2,14 +2,14 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ========== CONSTANTS & SAMPLE DATA ==========
 const INITIAL_INVENTORY = [
-    { id: 1, name: "MacBook Pro 14\"", category: "Electronics", quantity: 15, minStock: 5, price: 1999, supplier: "Apple", location: "Office HQ", images: [] },
-    { id: 2, name: "Ergonomic Office Chair", category: "Furniture", quantity: 25, minStock: 10, price: 349, supplier: "Herman Miller", location: "Warehouse A", images: [] },
-    { id: 3, name: "4K Monitor 27\"", category: "Electronics", quantity: 40, minStock: 15, price: 450, supplier: "Dell", location: "Office HQ", images: [] },
-    { id: 4, name: "Wireless Mechanical Keyboard", category: "Accessories", quantity: 100, minStock: 30, price: 129, supplier: "Logitech", location: "Storage Room", images: [] },
-    { id: 5, name: "Electric Standing Desk", category: "Furniture", quantity: 12, minStock: 5, price: 599, supplier: "Fully", location: "Warehouse B", images: [] },
-    { id: 6, name: "Noise Cancelling Headphones", category: "Accessories", quantity: 30, minStock: 10, price: 349, supplier: "Sony", location: "Office HQ", images: [] },
-    { id: 7, name: "Smart LED Desk Lamp", category: "Lighting", quantity: 65, minStock: 20, price: 79, supplier: "Xiaomi", location: "Storage Room", images: [] },
-    { id: 8, name: "USB-C Docking Station", category: "Accessories", quantity: 150, minStock: 50, price: 89, supplier: "Anker", location: "Storage Room", images: [] }
+    { id: 1, name: "MacBook Pro 14\"", category: "Electronics", quantity: 15, minStock: 5, price: 1999, supplier: "Apple", location: "Office HQ", images: ["../Images/MacBook_Pro_14-Inch.webp"] },
+    { id: 2, name: "Ergonomic Office Chair", category: "Furniture", quantity: 25, minStock: 10, price: 349, supplier: "Herman Miller", location: "Warehouse A", images: ["../Images/Ergonomic_Office_Chair.webp"] },
+    { id: 3, name: "4K Monitor 27\"", category: "Electronics", quantity: 40, minStock: 15, price: 450, supplier: "Dell", location: "Office HQ", images: ["../Images/4K_Monitor_27-inch.webp"] },
+    { id: 4, name: "Wireless Mechanical Keyboard", category: "Accessories", quantity: 100, minStock: 30, price: 129, supplier: "Logitech", location: "Storage Room", images: ["../Images/Wireless_Mechanical_Keyboard.webp"] },
+    { id: 5, name: "Electric Standing Desk", category: "Furniture", quantity: 12, minStock: 5, price: 599, supplier: "Fully", location: "Warehouse B", images: ["../Images/Electric_Standing_Desk.webp"] },
+    { id: 6, name: "Noise Cancelling Headphones", category: "Accessories", quantity: 30, minStock: 10, price: 349, supplier: "Sony", location: "Office HQ", images: ["../Images/Noise_Cancelling_Headphones.webp"] },
+    { id: 7, name: "Smart LED Desk Lamp", category: "Lighting", quantity: 65, minStock: 20, price: 79, supplier: "Xiaomi", location: "Storage Room", images: ["../Images/Smart_LED_Desk_Lamp.webp"] },
+    { id: 8, name: "USB-C Docking Station", category: "Accessories", quantity: 150, minStock: 50, price: 89, supplier: "Anker", location: "Storage Room", images: ["../Images/USB-C_Docking_station.webp"] }
 ];
 
 // ========== UTILITY FUNCTIONS ==========
@@ -255,7 +255,28 @@ const Utils = {
 function useInventoryData(addAlert) {
     const [inventory, setInventory] = useState(() => {
         const saved = localStorage.getItem('im_inventory');
-        if (saved) { try { return JSON.parse(saved); } catch (e) { return INITIAL_INVENTORY; } }
+        if (saved) {
+            try {
+                const parsedInventory = JSON.parse(saved);
+                // Merge images from INITIAL_INVENTORY for default items if they are missing
+                return parsedInventory.map(item => {
+                    const defaultItem = INITIAL_INVENTORY.find(i => i.id === item.id || i.name === item.name);
+                    if (defaultItem) {
+                        const hasNoImages = !item.images || item.images.length === 0;
+                        const hasStaleImages = item.images && item.images.some(img =>
+                            img.startsWith('data:image') || img.endsWith('.jpg')
+                        );
+
+                        if (hasNoImages || hasStaleImages) {
+                            return { ...item, images: defaultItem.images };
+                        }
+                    }
+                    return item;
+                });
+            } catch (e) {
+                return INITIAL_INVENTORY;
+            }
+        }
         return INITIAL_INVENTORY;
     });
     const [stockMovements, setStockMovements] = useState(() => {
