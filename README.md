@@ -39,9 +39,10 @@ Are you interested in the full version with:
 ## 🛠️ How to Run Locally
 
 1. **Clone the repo:**
-   ```bash
+
+```bash
 git clone https://github.com/OmarKrypton/inventory-manager.git
-   ```
+```
 
 2. **Open the project:**
    Simply open `HTML/index.html` in any modern web browser or use a simple local server:
