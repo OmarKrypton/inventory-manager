@@ -1,6 +1,4 @@
-```markdown
 <h1 align="center">Inventory Manager (Demo)</h1>
-```
 
 <p align="center">
   <img src="Images/logo.svg" alt="Inventory Manager Logo" width="100" height="100">
