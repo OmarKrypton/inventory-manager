@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional inventory management system demo">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Inventory Manager">
+    <title>Inventory Manager</title>
+    <link rel="stylesheet" href="../CSS/styles.css">
+    <style>
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0D9488;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #splash-status {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        #splash-error {
+            display: none;
+            max-width: 80%;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        /* ===== DEMO POPUP ===== */
+        #demo-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #demo-popup {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 40px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        #demo-popup .demo-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #0D9488, #14b8a6);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 5px 14px;
+            border-radius: 50px;
+            margin-bottom: 18px;
+        }
+
+        #demo-popup .demo-logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
+            display: block;
+        }
+
+        #demo-popup h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 10px;
+        }
+
+        #demo-popup p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            margin: 0 0 20px;
+        }
+
+        #demo-popup .demo-features {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        #demo-popup .demo-features p {
+            font-size: 13px;
+            font-weight: 600;
+            color: #166534;
+            margin: 0 0 8px;
+        }
+
+        #demo-popup .demo-features ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #15803d;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        #demo-popup .demo-contact {
+            margin-bottom: 24px;
+        }
+
+        #demo-popup .demo-contact p {
+            font-size: 13px;
+            color: #666;
+            margin: 0 0 10px;
+        }
+
+        #demo-popup .demo-contact a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #0D9488;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 4px 8px;
+            padding: 6px 14px;
+            border: 1.5px solid #0D9488;
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+
+        #demo-popup .demo-contact a:hover {
+            background: #0D9488;
+            color: white;
+        }
+
+        #demo-dismiss {
+            background: linear-gradient(135deg, #0D9488, #0f766e);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);
+        }
+
+        #demo-dismiss:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.5);
+        }
+
+        /* Dark mode support for popup */
+        .dark #demo-popup {
+            background: #1e293b;
+        }
+
+        .dark #demo-popup h2 {
+            color: #f1f5f9;
+        }
+
+        .dark #demo-popup p {
+            color: #94a3b8;
+        }
+
+        .dark #demo-popup .demo-features {
+            background: #0f2218;
+            border-color: #166534;
+        }
+
+        .dark #demo-popup .demo-contact p {
+            color: #94a3b8;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body>
+    <!-- Demo popup (shown once on first load) -->
+    <div id="demo-overlay" style="display:none;">
+        <div id="demo-popup">
+            <span class="demo-badge">🎯 Demo Version</span>
+            <img class="demo-logo" src="../Images/logo.svg" alt="Inventory Manager Logo"
+                onerror="this.style.display='none'">
+            <h2>Welcome to Inventory Manager</h2>
+            <p>This is a <strong>free demo</strong> of the full inventory management system. Some features are limited
+                in this version.</p>
+
+            <div class="demo-features">
+                <p>✅ Available in this demo:</p>
+                <ul>
+                    <li>Add, edit & delete inventory items</li>
+                    <li>Dashboard analytics & charts</li>
+                    <li>PDF report export</li>
+                    <li>CSV import & export</li>
+                    <li>Purchase orders & audit log</li>
+                    <li>Dark / Light mode</li>
+                </ul>
+            </div>
+
+            <div class="demo-contact">
+                <p>Want <strong>cloud sync, bulk operations, PWA install & forecasting</strong>? Get in touch:</p>
+                <a href="mailto:omar9007@gmail.com">📧 omar9007@gmail.com</a>
+                <a href="https://linkedin.com/in/omar-mahmoud-292b011b8/" target="_blank" rel="noopener">🔗 LinkedIn</a>
+            </div>
+
+            <button id="demo-dismiss" onclick="closeDemoPopup()">Got it, let me explore! 🚀</button>
+        </div>
+    </div>
+
+    <div id="splash-screen">
+        <div class="spinner"></div>
+        <div style="font-weight: bold; font-size: 18px;">Inventory Manager</div>
+        <div id="splash-status">Initializing...</div>
+        <div id="splash-error">
+            <div style="font-weight: bold; color: #ffcccc; margin-bottom: 5px;">Boot Error</div>
+            <div id="error-message" style="font-size: 13px;"></div>
+            <button onclick="location.reload()"
+                style="margin-top: 15px; background: white; color: #0D9488; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold;">Retry</button>
+        </div>
+    </div>
+    <div id="root"></div>
+
+    <script>
+        // ===== DEMO POPUP =====
+        function closeDemoPopup() {
+            const overlay = document.getElementById('demo-overlay');
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => overlay.style.display = 'none', 300);
+            localStorage.setItem('im_demo_seen', '1');
+        }
+
+        window.addEventListener('load', function () {
+            if (!localStorage.getItem('im_demo_seen')) {
+                // Show after splash screen fades
+                setTimeout(() => {
+                    document.getElementById('demo-overlay').style.display = 'flex';
+                }, 700);
+            }
+        });
+
+        // ===== APP LOADER =====
+        const statusEl = document.getElementById('splash-status');
+        const splashEl = document.getElementById('splash-screen');
+        const errorEl = document.getElementById('splash-error');
+        const errMsgEl = document.getElementById('error-message');
+
+        function setStatus(msg) {
+            console.log('🚀 ' + msg);
+            if (statusEl) statusEl.textContent = msg;
+        }
+
+        function showError(msg) {
+            console.error('❌ ' + msg);
+            if (statusEl) statusEl.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'block';
+            if (errMsgEl) errMsgEl.textContent = msg;
+        }
+
+        window.onerror = function (message, source, lineno, colno, error) {
+            showError(`${message} (Line: ${lineno})`);
+            return false;
+        };
+
+        setStatus('Fetching application core...');
+
+        fetch('../JS/app.js?v=' + Date.now())
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load app.js: ' + response.status);
+                return response.text();
+            })
+            .then(code => {
+                setStatus('Compiling modern components...');
+                try {
+                    const startTime = Date.now();
+                    const compiled = Babel.transform(code, {
+                        presets: ['react'],
+                        filename: 'app.js',
+                        compact: true
+                    }).code;
+
+                    console.log(`✅ Compiled in ${Date.now() - startTime}ms`);
+                    setStatus('Launching interface...');
+
+                    const script = document.createElement('script');
+                    script.textContent = compiled;
+                    document.body.appendChild(script);
+
+                    setTimeout(() => {
+                        if (splashEl) splashEl.style.display = 'none';
+                    }, 500);
+
+                } catch (babelError) {
+                    showError('Compilation failed: ' + babelError.message);
+                }
+            })
+            .catch(error => {
+                showError('Loading failed: ' + error.message);
+            });
+    </script>
+</body>
+
+</html>

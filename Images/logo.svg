@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="100" ry="100" fill="#0D9488"/>
+
+  <!-- Box/package body -->
+  <rect x="110" y="200" width="292" height="220" rx="18" ry="18" fill="white" opacity="0.95"/>
+
+  <!-- Box top flap -->
+  <path d="M110 200 L200 140 L312 140 L402 200 Z" fill="white" opacity="0.85"/>
+
+  <!-- Center fold line on lid -->
+  <line x1="256" y1="140" x2="256" y2="200" stroke="#0D9488" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Checklist lines inside box -->
+  <!-- Line 1 with check -->
+  <circle cx="165" cy="270" r="14" fill="#0D9488" opacity="0.9"/>
+  <polyline points="157,270 163,277 175,262" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="192" y="262" width="120" height="14" rx="7" fill="#0D9488" opacity="0.3"/>
+
+  <!-- Line 2 with check -->
+  <circle cx="165" cy="315" r="14" fill="#0D9488" opacity="0.9"/>
+  <polyline points="157,315 163,322 175,307" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="192" y="307" width="90" height="14" rx="7" fill="#0D9488" opacity="0.3"/>
+
+  <!-- Line 3 with check -->
+  <circle cx="165" cy="360" r="14" fill="#0D9488" opacity="0.9"/>
+  <polyline points="157,360 163,367 175,352" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="192" y="352" width="140" height="14" rx="7" fill="#0D9488" opacity="0.3"/>
+</svg>

@@ -1,0 +1,9 @@
+name,category,quantity,minStock,price,supplier,location
+HP Series Busbar Trunking,Busbar Systems,46,20,1250,Barduct Manufacturing,Warehouse A
+Switchgear Panel,Panels,15,10,850,Barduct Flex,Warehouse B
+Copper Busbar 100A,Busbars,120,50,85,Andeli,Warehouse A
+Circuit Breaker 63A,Electrical Components,200,100,45,Nano-EPC,Warehouse A
+Industrial Cable 4mm²,Cables,500,200,12,MM Electric,Warehouse C
+Insulator Components,Insulators,350,150,8,Wetown,Warehouse A
+Junction Box IP65,Enclosures,80,40,35,Andeli,Warehouse C
+Aluminum Busbar 200A,Busbars,8,30,65,WEG,Warehouse B
