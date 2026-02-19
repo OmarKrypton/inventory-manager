@@ -54,5 +54,24 @@ git clone https://github.com/OmarKrypton/inventory-manager.git
 
 ---
 
-## 📄 License
+## � Folder Structure
+
+```text
+inventory-manager/
+├── CSS/
+│   └── styles.css          # Main stylesheet
+├── CSV/
+│   └── Example/            # Sample inventory data
+├── HTML/
+│   └── index.html         # Main entry point (Dashboard)
+├── Images/
+│   └── logo.svg           # Project logo
+├── JS/
+│   └── app.js             # Core application logic (React)
+└── README.md              # Project documentation
+```
+
+---
+
+## �📄 License
 This demo is open source. Feel free to explore and use the code for learning purposes.
