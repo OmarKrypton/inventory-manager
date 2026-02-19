@@ -1,10 +1,10 @@
-<h1 align="center">Inventory Manager (Demo)</h1>
+<h1 align="center">Inventory Manager</h1>
 
 <p align="center">
   <img src="Images/logo.svg" alt="Inventory Manager Logo" width="100" height="100">
 </p>
 
-A clean, modern inventory management system for tracking items, stock levels, and suppliers.
+### A clean, modern inventory management system for tracking items, stock levels, and suppliers.
 
 ---
 
