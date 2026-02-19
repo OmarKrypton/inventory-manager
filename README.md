@@ -1,4 +1,6 @@
-# Inventory Manager (Demo)
+```markdown
+<h1 align="center">Inventory Manager (Demo)</h1>
+```
 
 <p align="center">
   <img src="Images/logo.svg" alt="Inventory Manager Logo" width="100" height="100">
@@ -40,7 +42,9 @@ Are you interested in the full version with:
 
 1. **Clone the repo:**
    ```bash
-   git clone https://github.com/your-username/inventory-manager.git
+```bash
+git clone https://github.com/OmarKrypton/inventory-manager.git
+```
    ```
 
 2. **Open the project:**
