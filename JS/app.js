@@ -2507,7 +2507,6 @@ function DashboardView({
 
 function InventoryView({
     inventory, categories, searchTerm, setSearchTerm, filterCategory, setFilterCategory,
-    inventory, categories, searchTerm, setSearchTerm, filterCategory, setFilterCategory,
     filteredInventory,
     openImageGallery, openEditModal, setShowAddCategoryModal, setShowAddModal,
     setEditingItem, setShowStockAdjustModal,
